@@ -1,0 +1,44 @@
+stages: 
+  - init 
+  - plan 
+  - apply 
+
+variables: 
+  TF_ROOT: "terraform"  # Directory containing your Terraform code 
+  
+before_script: 
+  # Install Terraform 
+  - apt-get update && apt-get install -y wget unzip 
+  - wget https://releases.hashicorp.com/terraform/1.5.4/terraform_1.5.4_linux_amd64.zip 
+  - unzip terraform_1.5.4_linux_amd64.zip -d /usr/local/bin/ 
+  - terraform --version 
+  
+init: 
+  stage: init 
+  script: 
+    - cd $TF_ROOT 
+    - terraform init 
+    - terraform validate
+        
+plan: 
+  stage: plan 
+  script: 
+    - cd $TF_ROOT 
+    - terraform init
+    - terraform plan
+  artifacts: 
+    paths: 
+      - $TF_ROOT/tfplan  
+  dependencies: 
+    - init  
+  
+apply:
+  stage: apply 
+  script: 
+    - cd $TF_ROOT 
+    - terraform init
+    - terraform plan -out=tfplan
+    - terraform apply -auto-approve tfplan 
+  when: manual   
+  dependencies: 
+    - plan
